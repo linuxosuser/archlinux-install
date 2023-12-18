@@ -1,6 +1,6 @@
-# archlinux-chroot
+# Műveletek
 
-git clone https://github.com/linuxosuser/archlinux-chroot
+git clone https://github.com/linuxosuser/archlinux-chroot.git
 
 cd archlinux-chroot
 
