@@ -4,6 +4,6 @@ git clone https://github.com/linuxosuser/archlinux-chroot-script.git
 
 cd archlinux-chroot-script
 
-chmod +x fájlnév.sh
+chmod +x fájlnév.sh # A "fájlnév" példát helyettesítse a szkript valódi fájlnevével!
 
-./fájlnév.sh
+./fájlnév.sh # A "fájlnév" példát helyettesítse a szkript valódi fájlnevével!
