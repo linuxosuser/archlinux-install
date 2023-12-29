@@ -1,9 +1,9 @@
 # Műveletek
 
-git clone https://github.com/linuxosuser/archlinux-chroot-environment.git
+git clone https://github.com/linuxosuser/archlinux-install.git
 
-cd archlinux-chroot-environment
+cd archlinux-install
 
-chmod +x fájlnév.sh # A "fájlnév" példát helyettesítse a szkript valódi fájlnevével!
+chmod +x chroot-operations.sh
 
-./fájlnév.sh # A "fájlnév" példát helyettesítse a szkript valódi fájlnevével!
+./chroot-operations.sh
