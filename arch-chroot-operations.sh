@@ -34,5 +34,3 @@ swapon /swapfile
 echo -n '/swapfile		none		swap		defaults 0 0' >> /etc/fstab
 
 echo -n 'vm.swappiness=20' > /etc/sysctl.d/99-sysctl.conf
-
-echo 'A MŰVELETEK BEFEJEZŐDTEK, KÉREM, HOGY FOLYTASSA A TOVÁBBI TENNIVALÓKAT!'
