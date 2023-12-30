@@ -34,7 +34,3 @@ swapon /swapfile
 echo -n '/swapfile		none		swap		defaults 0 0' >> /etc/fstab
 
 echo -n 'vm.swappiness=20' > /etc/sysctl.d/99-sysctl.conf
-
-passwd
-useradd -m -U -G wheel,audio,video,network,storage,optical,scanner,lp,sys,power -s /bin/bash homeuser
-passwd homeuser
