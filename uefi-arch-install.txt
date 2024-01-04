@@ -1,0 +1,280 @@
+	Arch Linux telepítése UEFI módban
+
+
+
+1. Töltse le az Arch Linux ISO-ját a számítógépére
+
+https://archlinux.org/download/
+
+2. A letöltött Arch Linux ISO-t írja ki pendrive-ra a Balena Etcher program segítségével
+
+https://etcher.balena.io/#download-etcher
+
+3. Lépjen be a számítógépének, vagy a laptopjának a BIOS-ába/UEFI-jébe (a BIOS-ba, vagy az UEFI-be való belépésének módját az alaplap, vagy a laptop kézikönyvében nézheti meg, hogy melyik billentyűvel kell ezt megtennie) és állítsa át a boot módot Legacy-ról UEFI-re, illetve kapcsolja ki a Secure Boot opciót. Ezek után állítsa be a boot sorrendet úgy, hogy a pendrive-ról induljon el az Arch Linux telepítője, majd ezt követően mentse el a beállításokat és már telepítheti is az Arch Linuxot.
+
+4. Ha elindult az Arch Linux operációs rendszer, akkor elsőként állítsa be a billentyűzet nyelvét magyarra.
+
+loadkeys hu
+
+5. Ha Wifihez szeretne csatlakozni és így szeretné elvégezni az Arch Linux telepítését, akkor az iwctl parancsot kell beírnia a Wifi menü belépéséhez.
+
+
+
+	A Wifihez való csatlakozás az iwctl segítségével
+
+
+
+1. device list
+2. station wlan0 scan
+3. station wlan0 get-networks
+4. station wlan0 connect <SSID> # Az SSID-t helyettesítse a Wifi hálózatának nevével.
+5. Írja be a Wifi jelszavát!
+6. Ellenőrizze a Wifi hálózatának állapotát a station wlan0 show parancs kiadásával
+7. Lépjen ki az iwctl-ből az exit parancs kiadásával
+
+Miután csatlakozott a Wifi hálózatához és kilépett az iwctl-ből, kérem kövesse a további lépéseket!
+
+6. Ellenőrizze le, hogy van-e internetkapcsolata. A legegyszerűbb módszer az, ha megpingel egy tetszőleges weboldalt. Erre egy jó példa:
+
+ping -c 4 archlinux.org
+
+Ha mind a négyszer visszaadja a pinget, akkor van internetkapcsolata.
+
+7. Szinkronizálás távoli idő kiszolgálóval
+
+timedatectl set-ntp true
+
+8. Szinkronizálja a tárolókat
+
+pacman -Syy
+
+9. Gyors tükörszerverek beállítása a reflector program segítségével
+
+reflector -l 4 -p https --sort rate --save /etc/pacman.d/mirrorlist
+
+10. Ha beállította a gyors tükörszervereket, akkor ismételten szinkronizálja a tárolókat, hogy a tárolók tekintetében is érvénybe lépjenek a változtatások.
+
+pacman -Syy
+
+11. Listáztassa ki a számítógépében lévő háttértárolókat. Ez azért fontos, mert ez alapján tud tájékozódni és így fogja tudni, hogy melyik háttértárolóra szeretné elvégezni az Arch Linux telepítését. A háttértárolók kilistázását az lsblk parancs kiadásával tudja megtenni.
+
+12. Ha átgondolta alaposan, hogy hová szeretné telepíteni az Arch Linuxot, akkor nyissa meg a cfdisk particionáló eszközt. Fontos, hogy az UEFI módban való telepítéshez a GPT partíciós táblát tessék használni! A cfdisk particionáló eszköz megnyitása a következő parancs kiadásával történik:
+
+cfdisk -z /dev/tárolóeszköz_név # A "tárolóeszköz_név" példát helyettesítse a valódi tárolóeszköz nevével, amit az Arch Linuxnak szán. Pl. sda, sdb, nvme0n1, de ez változó.
+
+
+
+	EFI rendszer partíció létrehozása
+
+
+
+1. New: Új partíció létrehozása
+2. Partíció méretének megadása: 550M
+3. Type: EFI System (Ezt az opciót a Type menüből válassza ki, mert alapból nem erre van állítva).
+
+
+
+	Rendszer (root) partíció létrehozása
+
+
+
+1. New: Új partíció létrehozása
+2. Partíció méretének megadása: Mivel csak és kizárólag az Arch Linux lesz feltelepítve a számítógépére/laptopjára, ezért Enterrel fogadja el az alapértelmezett értéket, amit felajánl a cfdisk particionáló eszköz.
+3. Type: Linux filesystem (Ezt a beállítást nem kell módosítania).
+4. Write: Ezzel az opcióval mentse el a változtatásokat. Fontos, hogy a yes parancsot be kell írnia, különben nem lépnek érvénybe a változtatások!
+5. Quit: Ezzel az opcióval lépjen ki a particionáló eszközből, majd a clear parancs kiadásával törölje le a képernyő tartalmát.
+
+Miután elvégezte a particionálást és kilépett a cfdisk particionáló eszközből is, kérem kövesse a további lépéseket még az Arch Linux telepítése előtt!
+
+13. Formázza le a már létrehozott partíciókat
+
+mkfs.fat -F32 /dev/efi_rendszer_partíció # Az "efi_rendszer_partíció" példát helyettesítse a valódi tárolóeszköz EFI rendszer partíciójával, pl. sda1, sdb1, nvme0n1p1, de ez változó.
+
+mkfs.ext4 /dev/root_partíció # A "root_partíció" példát helyettesítse a valódi tárolóeszköz root partíciójával, pl. sda2, sdb2, nvme0n1p2, de ez változó.
+
+14. A rendszer (root) partíció felcsatolása
+
+mount /dev/root_partíció /mnt # A "root_partíció" példát helyettesítse a valódi tárolóeszköz root partíciójával, pl. sda2, sdb2, nvme0n1p2, de ez változó.
+
+Vagy ha SSD-t használ, akkor:
+
+mount -o noatime,discard /dev/root_partíció /mnt # A "root_partíció" példát helyettesítse a valódi tárolóeszköz root partíciójával, pl. sda2, sdb2, nvme0n1p2, de ez változó.
+
+15. Boot könyvtár létrehozása
+
+mkdir /mnt/boot
+
+16. Az EFI rendszer partíció felcsatolása
+
+mount /dev/efi_rendszer_partíció /mnt/boot # Az "efi_rendszer_partíció" példát helyettesítse a valódi tárolóeszköz EFI rendszer partíciójával, pl. sda1, sdb1, nvme0n1p1, de ez változó.
+
+17. Az alaprendszer telepítése
+
+pacstrap /mnt base base-devel linux linux-firmware linux-headers ntfs-3g exfatprogs efibootmgr mtools dosfstools intel-ucode iucode-tool sudo mc git bash-completion
+
+18. Generálja le az fstabot
+
+genfstab -U /mnt >> /mnt/etc/fstab
+
+19. Lépjen be a chroot környezetbe
+
+arch-chroot /mnt
+
+20. Állítsa be az időzónát
+
+ln -sf /usr/share/zoneinfo/Europe/Budapest /etc/localtime
+
+21. Hardveróra és rendszeróra szinkronizálása
+
+hwclock --systohc --utc
+
+22. Szerkessze a locale.gen fájlt
+
+mcedit /etc/locale.gen
+
+Az en_US.UTF-8 UTF-8 és a hu_HU.UTF-8 UTF-8 elől vegye ki a # jelet és mentse el a fájlt az F2-es billentyűvel, majd lépjen ki a szövegszerkesztőből az F10-es billentyűvel.
+
+23. Generálja le a lokalizációkat
+
+locale-gen
+
+24. Töltse le és futtassa az "arch-chroot-operations.sh" nevezetű szkriptet, ami beállítja a magyar nyelvet, a hozzátartozó magyar környezeti változókat, a konzol nyelvét magyarra, a számítógép nevét, illetve a hálózati IP címeket a hosts fájlban. Majd ezt követően feltelepíti és engedélyezi a networkmanager hálózatkezelőt, valamint létrehozza és be is állítja a Swap fájlt. A szkriptet a következőképpen kell futtatnia:
+
+git clone https://github.com/linuxosuser/archlinux-install.git
+cd archlinux-install
+chmod +x arch-chroot-operations.sh
+./arch-chroot-operations.sh
+
+25. Alkalmazza a magyar nyelvet még itt a chroot környezetben
+
+export LANG=hu_HU.UTF-8
+
+26. Írja be a passwd parancsot a root jelszó megadásához
+
+27. Hozzon létre egy új felhasználói fiókot
+
+useradd -m -U -G wheel,audio,video,network,storage,optical,scanner,lp,sys,power -s /bin/bash felhasználónév # A "felhasználónév" példát helyettesítse a valódi felhasználónevével!
+
+28. Adjon meg jelszót a felhasználói fiókjának
+
+passwd felhasználónév # A "felhasználónév" példát helyettesítse a valódi felhasználónevével!
+
+29. Szerkessze a sudoers fájlt
+
+mcedit /etc/sudoers
+
+A %wheel ALL=(ALL:ALL) ALL elől vegye ki a # jelet, majd mentse el a fájlt az F2-es billentyűvel és lépjen ki a szövegszerkesztőből az F10-es billentyűvel.
+
+30. Szerkessze a pacman.conf fájlt
+
+mcedit /etc/pacman.conf
+
+A Color és a ParallelDownloads = 5 elől vegye ki a # jelet, majd ezután menjen a konfigurációs fájl legaljára és a [multilib], majd ezt követően a következő sorban lévő Include = /etc/pacman.d/mirrorlist elől is vegye ki a # jelet. Ha ezzel is készen van, akkor mentse el a fájlt az F2-es billentyűvel, majd lépjen ki a szövegszerkesztőből az F10-es billentyűvel.
+
+31. Léptesse érvénybe a tárolók tekintetében is a változtatásokat
+
+pacman -Syu # Ezzel egyúttal le is tudja frissíteni az Arch Linuxot, amennyiben frissítések érhetőek el. Ezt mindenképpen tegye meg.
+
+32. Telepítse a systemd-boot bootloadert
+
+bootctl --path=/boot install
+
+33. FONTOS! Nézze meg a root partíciójának PARTUUID-jét, mert ez kelleni fog a systemd-boot bootloader konfigurálásához. Ezt pedig a következő parancs kiadásával tudja megtenni:
+
+blkid -s PARTUUID -o value /dev/root_partíció # A "root_partíció" példát helyettesítse a valódi tárolóeszköz root partíciójával, pl. sda2, sdb2, nvme0n1p2, de ez változó. A root partíció PARTUUID-jét mindenképpen jegyezze fel valahova ideiglenesen.
+
+34. Konfigurálja a loader.conf fájlt
+
+mcedit /boot/loader/loader.conf
+
+A konfigurációs fájl tartalmának a következőképpen kell kinéznie:
+
+default  arch.conf
+timeout  8
+console-mode max
+editor   no
+
+Ha készen van, akkor mentse el a fájlt az F2-es billentyűvel, majd lépjen ki a szövegszerkesztőből az F10-es billentyűvel.
+
+35. Hozza létre és egyúttal szerkessze az arch.conf fájlt
+
+mcedit /boot/loader/entries/arch.conf
+
+title   Arch Linux
+linux   /vmlinuz-linux
+initrd  /intel-ucode.img
+initrd  /initramfs-linux.img
+options root=PARTUUID=root-partíció-partuuid rw # a "root-partíció-partuuid" példát helyettesítse a valódi tárolóeszköz root partíció PARTUUID-jével.
+
+Ha készen van, akkor mentse el a fájlt az F2-es billentyűvel, majd lépjen ki a szövegszerkesztőből az F10-es billentyűvel.
+
+36. Hozza létre és egyúttal szerkessze az arch-fallback.conf fájlt
+
+mcedit /boot/loader/entries/arch-fallback.conf
+
+title   Arch Linux Fallback
+linux   /vmlinuz-linux
+initrd  /intel-ucode.img
+initrd  /initramfs-linux-fallback.img
+options root=PARTUUID=root-partíció-partuuid rw # a "root-partíció-partuuid" példát helyettesítse a valódi tárolóeszköz root partíció PARTUUID-jével.
+
+Ha készen van, akkor mentse el a fájlt az F2-es billentyűvel, majd lépjen ki a szövegszerkesztőből az F10-es billentyűvel.
+
+FONTOS! Ha Intel processzora van a számítógépében, akkor a /intel-ucode.img bejegyzést használja az arch.conf, illetve az arch-fallback.conf konfigurációs fájlokban a fent leírtak alapján. Ha viszont AMD processzora van a számítógépében, akkor pedig a /amd-ucode.img bejegyzést használja az arch.conf, illetve az arch-fallback.conf konfigurációs fájlokban a fent leírtak alapján.
+
+
+
+	Intel és AMD mikrokód telepítése
+
+
+
+pacman -S intel-ucode iucode-tool
+pacman -S amd-ucode
+
+Ezeket a műveleteket ajánlott elvégeznie még itt a chroot környezetben. Én a pacstrap parancsnál azért telepítettem fel az intel-ucode és az iucode-tool csomagokat, mert nekem Inteles processzorom van és az ehhez tartozó mikrokódra van szükségem. Az arch.conf és az arch-fallback.conf konfigurációs fájlokhoz is ugyanezért adtam hozzá a /intel-ucode.img bejegyzést. Ezt a félreértések elkerülése céljából említettem meg, hiszen ha valakinek más gyártmányú processzora van, akkor egy másik mikrokód csomagot kell feltelepítenie a Pacman csomagkezelőből és azt hozzáadnia bejegyzésként az előbb említett konfigurációs fájlokhoz és ezért gondoltam, hogy tisztázom a helyzetet. Azonban ha már a pacstrap parancsnál feltelepítette a processzorához tartozó mikrokódot, akkor ezt már nem kell megtennie a chroot környezetben, csak a bejegyzést kell hozzáadnia az előbb említett konfigurációs fájlokhoz.
+
+37. Lépjen ki a chroot környezetből az exit parancs kiadásával, válassza le az eddig felcsatolt eszközöket az umount -a parancs kiadásával, majd ezt követően indítsa újra a számítógépét a reboot parancs kiadásával. Ha ez megtörtént, akkor jelentkezzen be a felhasználói fiókjával és innentől kezdve elkezdheti felépíteni az operációs rendszerét a saját igényei szerint.
+
+
+
+	Xfce asztali környezet telepítése
+
+
+
+git clone https://github.com/linuxosuser/archlinux-programs.git
+cd archlinux-programs
+chmod +x *.sh
+sudo ./xfce-desktop-install.sh
+
+Ha lefutott a szkript, akkor indítsa újra a számítógépét és ha ez megtörtént, akkor jelentkezzen be a felhasználói fiókjával és telepítse fel az Xfce asztali környezethez készített programokat. (Ebben a szkriptben minden egyéb más szoftverek is megtalálhatóak).
+
+git clone https://github.com/linuxosuser/archlinux-programs.git
+cd archlinux-programs
+chmod +x *.sh
+sudo ./xfce-programs-install.sh
+
+Ha lefutott a szkript, akkor indítsa újra a számítógépét.
+
+
+
+	KDE Plasma asztali környezet telepítése
+
+
+
+git clone https://github.com/linuxosuser/archlinux-programs.git
+cd archlinux-programs
+chmod +x *.sh
+sudo ./plasma-desktop-install.sh
+
+Ha lefutott a szkript, akkor indítsa újra a számítógépét és ha ez megtörtént, akkor jelentkezzen be a felhasználói fiókjával és telepítse fel a KDE Plasma asztali környezethez készített programokat. (Ebben a szkriptben minden egyéb más szoftverek is megtalálhatóak).
+
+git clone https://github.com/linuxosuser/archlinux-programs.git
+cd archlinux-programs
+chmod +x *.sh
+sudo ./plasma-programs-install.sh
+
+Ha lefutott a szkript, akkor indítsa újra a számítógépét és ezek után már használatba is veheti az Arch Linuxot.
+
+FIGYELEM! A programtelepítő szkriptek nem tartalmazzák a videokártya illesztőprogramjainak telepítését. Ebben sajnos nem tudok segíteni, mert minden számítógépben és laptopban másmilyen videokártya van, ezért az illesztőprogramok telepítése is különböző lehet. Viszont tudom Önnek javasolni az ArchWiki weboldalát, ahol nagyon jól leírják azt, hogy melyik videokártyához milyen csomagok, vagy illesztőprogramok szükségesek és azokat hogyan kell feltelepíteni. Egy másik megoldás, amit tudok Önnek javasolni, az az, hogy nézzen Youtube videót, vagy egyéb más leírásokat a videokártya illesztőprogramjainak telepítéséről, ahol NAPRAKÉSZ INFORMÁCIÓK VANNAK! Ez nagyon fontos!!
+
+Sok sikert kívánok Önnek az Arch Linux telepítéséhez és használatához!
